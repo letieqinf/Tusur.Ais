@@ -14,20 +14,19 @@ public class UniversityController : Controller
     {
         _context = context;
     }
-    
+
     [HttpPost]
     [Route("add-recruitment-year")]
-    public async Task<IActionResult> AddRecruitmentYear([FromBody] CreateRecruitmentYearRequestModel model, 
-        [FromBody] CreateFacultyRequestModel facultyModel)
+    public async Task<IActionResult> AddRecruitmentYear([FromBody] CreateRecruitmentYearRequestModel model)
     {
         var foundEducationPlan = await _context.StudyPlans
-            .FirstOrDefaultAsync(e => e.FacultyName == facultyModel.FacultyName);
+            .FirstOrDefaultAsync(e => e.FacultyName == model.FacultyName);
 
         if (foundEducationPlan is null)
         {
             return BadRequest($"EducationPlan ${foundEducationPlan} not found in database");
         }
-        
+
         var foundStudyPlan = await _context.StudyPlans
             .FirstOrDefaultAsync(e => e.FacultyName == foundEducationPlan.FacultyName);
 
@@ -38,7 +37,7 @@ public class UniversityController : Controller
 
         var foundRecruitmentYear = await _context.RecruitmentYears
             .FirstOrDefaultAsync(r => r.Year.Year == model.Year.Year);
-        
+
         if (foundRecruitmentYear is not null)
         {
             return BadRequest($"RecruitmentYear ${foundRecruitmentYear.Year.Year} already added in database");
@@ -47,27 +46,27 @@ public class UniversityController : Controller
         var recruitmentYear = new RecruitmentYear
         {
             Id = Guid.NewGuid(),
-            StudyPlanId = foundStudyPlan.Id, 
+            StudyPlanId = foundStudyPlan.Id,
             Year = model.Year,
             StudyPlan = foundStudyPlan
         };
-        
+
         var result = await _context.AddAsync(recruitmentYear);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
-        
+
         await _context.SaveChangesAsync();
-        
+
         return Ok();
     }
-    
+
     [HttpPost]
     [Route("add-study-profile")]
     public async Task<IActionResult> AddStudyProfile([FromBody] CreateStudyProfileRequestModel model)
     {
         var foundStudyField = await _context.StudyFields
             .FirstOrDefaultAsync(s => s.Name == model.StudyFieldName);
-        
+
         if (foundStudyField is null)
         {
             return BadRequest($"StudyField ${model.Name} doesn't added in database");
@@ -80,7 +79,7 @@ public class UniversityController : Controller
         {
             return BadRequest($"StudyProfile ${foundStudyField.Name} already added in database");
         }
-        
+
         var studyProfile = new StudyProfile
         {
             Id = Guid.NewGuid(),
@@ -88,17 +87,16 @@ public class UniversityController : Controller
             Name = model.Name,
             StudyField = foundStudyField
         };
-        
+
         var result = await _context.AddAsync(studyProfile);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
 
         await _context.SaveChangesAsync();
-        
+
         return Ok();
     }
 
-    
     [HttpPost]
     [Route("add-study-plan")]
     public async Task<IActionResult> AddStudyPlan([FromBody] CreateStudyPlanRequestModel model)
@@ -110,7 +108,7 @@ public class UniversityController : Controller
         {
             return BadRequest($"Faculty ${model.FacultyName} doesn't added in database");
         }
-        
+
         var foundStudyProfile = await _context.StudyProfiles
             .FirstOrDefaultAsync(s => s.Name == model.StudyProfileName);
 
@@ -118,7 +116,7 @@ public class UniversityController : Controller
         {
             return BadRequest($"StudyProfile ${foundStudyProfile?.Name} doesn't added in database");
         }
-        
+
         var foundStudyPlan = await _context.StudyPlans
             .FirstOrDefaultAsync(s => s.FacultyName == foundFaculty.Name);
 
@@ -130,22 +128,22 @@ public class UniversityController : Controller
         var studyPlan = new StudyPlan
         {
             Id = Guid.NewGuid(),
-            StudyProfileId = foundStudyProfile.Id, 
+            StudyProfileId = foundStudyProfile.Id,
             FacultyName = foundFaculty.Name,
             //Form = forms // ??
             StudyProfile = foundStudyProfile,
             Faculty = foundFaculty,
         };
-        
+
         var result = await _context.AddAsync(studyPlan);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
 
         await _context.SaveChangesAsync();
-        
+
         return Ok();
     }
-    
+
     [HttpPost]
     [Route("add-study-field")]
     public async Task<IActionResult> AddStudyField([FromBody] CreateStudyFieldRequestModel model)
@@ -157,21 +155,21 @@ public class UniversityController : Controller
         {
             return BadRequest($"StudyField ${foundStudyField.Name} already added in database");
         }
-        
+
         var studyField = new StudyField
         {
             Name = model.StudyFieldName
         };
-        
+
         var result = await _context.AddAsync(studyField);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
 
         await _context.SaveChangesAsync();
-        
+
         return Ok();
     }
-    
+
     [HttpPost]
     [Route("add-faculty")]
     public async Task<IActionResult> AddFaculty([FromBody] CreateFacultyRequestModel model)
@@ -183,24 +181,24 @@ public class UniversityController : Controller
         {
             return BadRequest($"Faculty ${foundFaculty.Name} already added in database");
         }
-        
+
         var faculty = new Faculty
         {
             Name = model.FacultyName
         };
-        
+
         var result = await _context.AddAsync(faculty);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
-        
+
         await _context.SaveChangesAsync();
-        
+
         return Ok();
     }
     
-    [HttpPost("add-department")]
-    public async Task<IActionResult> AddDepartment([FromBody] CreateFacultyRequestModel facultyModel, 
-        [FromBody] CreateDepartmentRequestModel departmentModel)
+    [HttpPost]
+    [Route("add-department")]
+    public async Task<IActionResult> AddDepartment([FromBody] CreateFacultyRequestModel facultyModel)
     {
         var foundFaculty = await _context.Faculties
             .FirstOrDefaultAsync(f => f.Name == facultyModel.FacultyName);
@@ -211,7 +209,7 @@ public class UniversityController : Controller
         }
 
         var foundDepartment = await _context.Departments
-            .FirstOrDefaultAsync(d => d.FacultyName == foundFaculty.Name && d.Name == departmentModel.Name);
+            .FirstOrDefaultAsync(d => d.FacultyName == foundFaculty.Name && d.Name == facultyModel.Name);
 
         if (foundDepartment is not null)
         {
@@ -222,22 +220,22 @@ public class UniversityController : Controller
         {
             Id = Guid.NewGuid(),
             FacultyName = foundFaculty.Name,
-            Name = departmentModel.Name,
+            Name = facultyModel.Name,
             Faculty = foundFaculty
         };
-        
+
         var result = await _context.AddAsync(department);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
-        
+
         await _context.SaveChangesAsync();
 
         return Ok();
     }
-    
-    [HttpPost("add-group")]
-    public async Task<IActionResult> AddGroup([FromBody] CreateRecruitmentYearRequestModel recruitmentYear, 
-        [FromBody] CreateDepartmentRequestModel department, [FromBody] CreateGroupRequestModel groupModel)
+
+    [HttpPost]
+    [Route("add-group")]
+    public async Task<IActionResult> AddGroup([FromBody] CreateRecruitmentYearRequestModel recruitmentYear)
     {
         var foundRecruitmentYear = await _context.RecruitmentYears
             .FirstOrDefaultAsync(r => r.Year.Year == recruitmentYear.Year.Year);
@@ -246,40 +244,40 @@ public class UniversityController : Controller
         {
             return BadRequest($"RecruitmentYear ${recruitmentYear} not found in database");
         }
-        
+
         var foundDepartment = await _context.Departments
-            .FirstOrDefaultAsync(d => d.Name == department.Name);
+            .FirstOrDefaultAsync(d => d.Name == recruitmentYear.DepartmentName);
 
         if (foundDepartment is null)
         {
-            return BadRequest($"Department ${department.Name} not found in database");
+            return BadRequest($"Department ${recruitmentYear.DepartmentName} not found in database");
         }
-        
+
         var foundGroup = await _context.Groups
-            .FirstOrDefaultAsync(g => g.RecruitmentYearId == foundRecruitmentYear.Id 
-                                 && g.DepartmentId == foundDepartment.Id && g.Name == groupModel.Name);
+            .FirstOrDefaultAsync(g => g.RecruitmentYearId == foundRecruitmentYear.Id
+                                      && g.DepartmentId == foundDepartment.Id && g.Name == recruitmentYear.GroupName);
 
         if (foundGroup is not null)
         {
             return BadRequest($"Group ${foundGroup.Name} already added in database");
         }
-        
+
         var group = new Group
         {
             Id = Guid.NewGuid(),
             RecruitmentYearId = foundRecruitmentYear.Id,
             DepartmentId = foundDepartment.Id,
-            Name = groupModel.Name,
+            Name = recruitmentYear.GroupName,
             RecruitmentYear = foundRecruitmentYear,
             Department = foundDepartment
         };
-        
+
         var result = await _context.AddAsync(group);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
-        
+
         await _context.SaveChangesAsync();
-        
+
         return Ok();
     }
 }

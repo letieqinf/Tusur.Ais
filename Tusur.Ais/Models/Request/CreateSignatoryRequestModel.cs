@@ -8,4 +8,6 @@ public class CreateSignatoryRequestModel
     [Required] public string LastName { get; set; }
     [Required] public string? Patronymic { get; set; }
     [Required] public string? JobTitle { get; set; }
+    [Required] public DateTime DateStart { get; set; }
+    [Required] public int Number { get; set; }
 }

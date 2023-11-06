@@ -65,7 +65,7 @@ public class EntityController : Controller
     
     [HttpPost]
     [Route("add-secretary")]
-    public async Task<IActionResult> AddSecretary([FromBody]CreateSecretaryRequestModel model)
+    public async Task<IActionResult> AddSecretary([FromBody] CreateSecretaryRequestModel model)
     {
         var foundUser = await _context.Users
             .FirstOrDefaultAsync(u => u.Name == model.Name && u.LastName == model.LastName 

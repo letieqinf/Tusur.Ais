@@ -45,7 +45,7 @@ public class ContractController : Controller
 
     [HttpPost]
     [Route("add-proxy")]
-    public async Task<IActionResult> AddProxy([FromBody] CreateSignatoryRequestModel model, [FromBody] CreateProxyRequestModel proxyModel)
+    public async Task<IActionResult> AddProxy([FromBody] CreateSignatoryRequestModel model)
     {
         var foundSignatory = await _context.Signatories
             .FirstOrDefaultAsync(s => s.Name == model.Name && s.LastName == model.LastName && 
@@ -57,7 +57,7 @@ public class ContractController : Controller
         }
 
         var foundProxy = await _context.Proxies
-            .FirstOrDefaultAsync(p => p.Number == proxyModel.Number);
+            .FirstOrDefaultAsync(p => p.Number == model.Number);
 
         if (foundProxy is not null)
         {
@@ -68,8 +68,8 @@ public class ContractController : Controller
         {
             Id = Guid.NewGuid(),
             SignatoryId = foundSignatory.Id,
-            DateStart = proxyModel.DateStart,
-            Number = proxyModel.Number,
+            DateStart = model.DateStart,
+            Number = model.Number,
             Signatory = foundSignatory
         };
         
