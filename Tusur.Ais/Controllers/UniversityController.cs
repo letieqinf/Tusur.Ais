@@ -20,7 +20,7 @@ public class UniversityController : Controller
     public async Task<IActionResult> AddRecruitmentYear([FromBody] CreateRecruitmentYearRequestModel model, 
         [FromBody] CreateFacultyRequestModel facultyModel)
     {
-        var foundEducationPlan = await _context.EducationPlans
+        var foundEducationPlan = await _context.StudyPlans
             .FirstOrDefaultAsync(e => e.FacultyName == facultyModel.FacultyName);
 
         if (foundEducationPlan is null)
@@ -141,93 +141,6 @@ public class UniversityController : Controller
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
 
-        await _context.SaveChangesAsync();
-        
-        return Ok();
-    }
-    
-    [HttpPost]
-    [Route("add-education-plan")]
-    public async Task<IActionResult> AddEducationPlan([FromBody] CreateTrainingProfileRequestModel model,
-        [FromBody] CreateStudyFieldRequestModel studyFieldModel, [FromBody] CreateFacultyRequestModel facultyModel)
-    {
-        var foundTrainingProfile = await _context.TrainingProfiles
-            .FirstOrDefaultAsync(t => t.TrainingProfileName == model.TrainingProfileName);
-
-        if (foundTrainingProfile is null)
-        {
-            return BadRequest($"TrainingProfile ${foundTrainingProfile?.TrainingProfileName} not found in database");
-        }
-        
-        var foundFaculty = await _context.Faculties
-            .FirstOrDefaultAsync(f => f.Name == facultyModel.FacultyName);
-
-        if (foundFaculty is null)
-        {
-            return BadRequest($"Faculty ${foundFaculty?.Name} not found in database");
-        }
-        
-        var foundEducationPlan = await _context.EducationPlans
-            .FirstOrDefaultAsync(e => e.TrainingProfileId == foundTrainingProfile.TrainingProfileId 
-                                 && e.FacultyName == foundFaculty.Name);
-
-        if (foundEducationPlan is not null)
-        {
-            return BadRequest($"EducationPlan ${foundEducationPlan} already added in database");
-        }
-        
-        var educationPlan = new EducationPlan
-        {
-            EducationPlanId = Guid.NewGuid(),
-            TrainingProfileId = foundTrainingProfile.TrainingProfileId,
-            FacultyName = foundFaculty.Name,
-            //EducationForm = educationForm,
-            TrainingProfile = foundTrainingProfile,
-            Faculty = foundFaculty,
-        };
-        
-        var result = await _context.AddAsync(educationPlan);
-        if (result.State != EntityState.Added)
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        
-        await _context.SaveChangesAsync();
-        
-        return Ok();
-    }
-
-    [HttpPost]
-    [Route("add-training-profile")]
-    public async Task<IActionResult> AddTrainingProfile([FromBody] CreateTrainingProfileRequestModel model,
-        [FromBody] CreateStudyFieldRequestModel studyFieldModel)
-    {
-        var foundStudyField = await _context.StudyFields
-            .FirstOrDefaultAsync(s => s.Name == studyFieldModel.StudyFieldName);
-
-        if (foundStudyField is null)
-        {
-            return BadRequest($"StudyField ${foundStudyField?.Name} not found in database");
-        }
-        
-        var foundTrainingProfile = await _context.TrainingProfiles
-            .FirstOrDefaultAsync(t => t.TrainingProfileName == model.TrainingProfileName);
-
-        if (foundTrainingProfile is not null)
-        {
-            return BadRequest($"TrainingProfile ${foundTrainingProfile.TrainingProfileName} already added in database");
-        }
-        
-        var trainingProfile = new TrainingProfile
-        {
-            TrainingProfileId = Guid.NewGuid(),
-            StudyFieldName = foundStudyField.Name,
-            TrainingProfileName = model.TrainingProfileName,
-            StudyField = foundStudyField
-        };
-        
-        var result = await _context.AddAsync(trainingProfile);
-        if (result.State != EntityState.Added)
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        
         await _context.SaveChangesAsync();
         
         return Ok();
@@ -362,52 +275,6 @@ public class UniversityController : Controller
         };
         
         var result = await _context.AddAsync(group);
-        if (result.State != EntityState.Added)
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        
-        await _context.SaveChangesAsync();
-        
-        return Ok();
-    }
-    
-    [HttpPost]
-    [Route("add-student-in-group")]
-    public async Task<IActionResult> AddStudentInGroup([FromBody] CreateStudentInGroupRequestModel model)
-    {
-        var foundGroup = await _context.Groups
-            .FirstOrDefaultAsync(g => g.Name == model.GroupName);
-
-        if (foundGroup is null)
-        {
-            return BadRequest($"Group ${foundGroup} not found in database");
-        }
-        
-        var foundStudent = await _context.Students
-            .FirstOrDefaultAsync(s => s.User.Name == model.Name && s.User.LastName == model.LastName 
-                                                                && s.User.Patronymic == model.Patronymic);
-
-        if (foundStudent is null)
-        {
-            return BadRequest($"Student ${foundStudent} not found in database");
-        }
-
-        var foundStudentInGroup = await _context.StudentInGroups
-            .FirstOrDefaultAsync(s => s.GroupId == foundGroup.Id && s.StudentId == foundStudent.Id);
-
-        if (foundStudentInGroup is not null)
-        {
-            return BadRequest($"StudentInGroup ${foundStudentInGroup} already added in database");
-        }
-
-        var studentInGroup = new StudentInGroup
-        { 
-            GroupId = foundGroup.Id,
-            StudentId = foundStudent.Id,
-            Group = foundGroup,
-            Student = foundStudent
-        };
-        
-        var result = await _context.AddAsync(studentInGroup);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
         

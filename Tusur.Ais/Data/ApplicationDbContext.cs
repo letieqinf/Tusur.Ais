@@ -56,10 +56,6 @@ namespace Tusur.Ais.Data
         public DbSet<StudyField> StudyFields { get; set; }
         public DbSet<StudyProfile> StudyProfiles { get; set; }
         public DbSet<StudyPlan> StudyPlans { get; set; }
-        public DbSet<TrainingProfile> TrainingProfiles { get; set; }
-        public DbSet<StudentContract> StudentContracts { get; set; }
-        public DbSet<StudentInGroup> StudentInGroups { get; set; }
-        public DbSet<EducationPlan> EducationPlans { get; set; }
         public DbSet<PracticeContract> PracticeContracts { get; set; }
 
         #endregion
