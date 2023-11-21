@@ -4,6 +4,7 @@ namespace Tusur.Ais.Models.Request;
 
 public class CreateSignatoryRequestModel
 {
+    [Required, Key] public Guid SignatoryId { get; set; }
     [Required] public string Name { get; set; }
     [Required] public string LastName { get; set; }
     [Required] public string? Patronymic { get; set; }

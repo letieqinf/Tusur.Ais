@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Tusur.Ais.Data;
 using Tusur.Ais.Data.Entities.IntergroupRelations;
 using Tusur.Ais.Data.Entities.Users;
@@ -21,8 +22,7 @@ public class EntityController : Controller
     public async Task<IActionResult> AddTeacherDepartment([FromBody] CreateTeacherDepartmentRequestModel model)
     {
         var foundTeacher = await _context.Teachers
-            .FirstOrDefaultAsync(t => t.User.Name == model.Name && t.User.LastName == model.LastName 
-                                                           && t.User.Patronymic == model.Patronymic);
+            .FirstOrDefaultAsync(t => t.Id == model.TeacherId);
 
         if (foundTeacher is null)
         {
@@ -67,34 +67,28 @@ public class EntityController : Controller
     [Route("add-secretary")]
     public async Task<IActionResult> AddSecretary([FromBody] CreateSecretaryRequestModel model)
     {
-        var foundUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Name == model.Name && u.LastName == model.LastName 
-                                                           && u.Patronymic == model.Patronymic);
-
-        if (foundUser is null)
-        {
-            return BadRequest($"User ${foundUser} not found in database");
-        }
-
         var foundSecretary = await _context.Secretaries
-            .FirstOrDefaultAsync(s => s.UserId == foundUser.Id);
+            .FirstOrDefaultAsync(s => s.UserId == model.SecretaryId);
         
         if (foundSecretary is not null)
         {
             return BadRequest($"Secretary ${foundSecretary} already added in database");
         }
 
-        var secretary = new Secretary
-        { 
-            Id = Guid.NewGuid(),
-            UserId = foundUser.Id,
-            User = foundUser
-        };
+        if (foundSecretary != null)
+        {
+            var secretary = new Secretary
+            { 
+                Id = Guid.NewGuid(),
+                UserId = foundSecretary.UserId,
+                User = foundSecretary.User
+            };
         
-        var result = await _context.AddAsync(secretary);
-        if (result.State != EntityState.Added)
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        
+            var result = await _context.AddAsync(secretary);
+            if (result.State != EntityState.Added)
+                return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
         await _context.SaveChangesAsync();
         
         return Ok();
@@ -104,34 +98,28 @@ public class EntityController : Controller
     [Route("add-education-department")]
     public async Task<IActionResult> AddEducationDepartment([FromBody] CreateEducationDepartmentRequestModel model)
     {
-        var foundUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Name == model.Name && u.LastName == model.LastName 
-                                                           && u.Patronymic == model.Patronymic);
-
-        if (foundUser is null)
-        {
-            return BadRequest($"User ${foundUser} not found in database");
-        }
-
         var foundEducationDepartment = await _context.EducationDepartments
-            .FirstOrDefaultAsync(s => s.UserId == foundUser.Id);
+            .FirstOrDefaultAsync(s => s.Id == model.EducationDepartmentId);
         
         if (foundEducationDepartment is not null)
         {
             return BadRequest($"EducationDepartment ${foundEducationDepartment} already added in database");
         }
 
-        var educationDepartment = new EducationDepartment
-        { 
-            Id = Guid.NewGuid(),
-            UserId = foundUser.Id,
-            User = foundUser
-        };
+        if (foundEducationDepartment != null)
+        {
+            var educationDepartment = new EducationDepartment
+            { 
+                Id = Guid.NewGuid(),
+                UserId = foundEducationDepartment.UserId,
+                User = foundEducationDepartment.User
+            };
         
-        var result = await _context.AddAsync(educationDepartment);
-        if (result.State != EntityState.Added)
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        
+            var result = await _context.AddAsync(educationDepartment);
+            if (result.State != EntityState.Added)
+                return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
         await _context.SaveChangesAsync();
         
         return Ok();

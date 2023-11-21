@@ -48,8 +48,7 @@ public class ContractController : Controller
     public async Task<IActionResult> AddProxy([FromBody] CreateSignatoryRequestModel model)
     {
         var foundSignatory = await _context.Signatories
-            .FirstOrDefaultAsync(s => s.Name == model.Name && s.LastName == model.LastName && 
-                                      s.JobTitle == model.JobTitle && s.Patronymic == model.Patronymic);
+            .FirstOrDefaultAsync(s => s.Id == model.SignatoryId);
 
         if (foundSignatory is null)
         {
