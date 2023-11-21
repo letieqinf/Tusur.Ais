@@ -68,26 +68,23 @@ public class EntityController : Controller
     public async Task<IActionResult> AddSecretary([FromBody] CreateSecretaryRequestModel model)
     {
         var foundSecretary = await _context.Secretaries
-            .FirstOrDefaultAsync(s => s.UserId == model.SecretaryId);
+            .FirstOrDefaultAsync(s => s.Id == model.SecretaryId);
         
         if (foundSecretary is not null)
         {
             return BadRequest($"Secretary ${foundSecretary} already added in database");
         }
 
-        if (foundSecretary != null)
-        {
-            var secretary = new Secretary
-            { 
-                Id = Guid.NewGuid(),
-                UserId = foundSecretary.UserId,
-                User = foundSecretary.User
-            };
-        
-            var result = await _context.AddAsync(secretary);
-            if (result.State != EntityState.Added)
-                return StatusCode(StatusCodes.Status500InternalServerError);
-        }
+        var secretary = new Secretary
+        { 
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            //User = foundSecretary.User
+        };
+    
+        var result = await _context.AddAsync(secretary);
+        if (result.State != EntityState.Added)
+            return StatusCode(StatusCodes.Status500InternalServerError);
 
         await _context.SaveChangesAsync();
         

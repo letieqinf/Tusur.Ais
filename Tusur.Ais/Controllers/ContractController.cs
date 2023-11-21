@@ -24,6 +24,14 @@ public class ContractController : Controller
         {
             return BadRequest("Not all fields are filled in");
         }
+        
+        var foundSignatory = await _context.Signatories
+            .FirstOrDefaultAsync(s => s.Id == model.SignatoryId);
+        
+        if (foundSignatory is not null)
+        {
+            return BadRequest($"Found signatory {foundSignatory} already added in database");
+        }
 
         var signatory = new Signatory
         {
@@ -45,7 +53,7 @@ public class ContractController : Controller
 
     [HttpPost]
     [Route("add-proxy")]
-    public async Task<IActionResult> AddProxy([FromBody] CreateSignatoryRequestModel model)
+    public async Task<IActionResult> AddProxy([FromBody] CreateProxyRequestModel model)
     {
         var foundSignatory = await _context.Signatories
             .FirstOrDefaultAsync(s => s.Id == model.SignatoryId);

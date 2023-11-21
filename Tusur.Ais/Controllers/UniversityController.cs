@@ -19,16 +19,8 @@ public class UniversityController : Controller
     [Route("add-recruitment-year")]
     public async Task<IActionResult> AddRecruitmentYear([FromBody] CreateRecruitmentYearRequestModel model)
     {
-        var foundEducationPlan = await _context.StudyPlans
-            .FirstOrDefaultAsync(e => e.FacultyName == model.FacultyName);
-
-        if (foundEducationPlan is null)
-        {
-            return BadRequest($"EducationPlan ${foundEducationPlan} not found in database");
-        }
-
         var foundStudyPlan = await _context.StudyPlans
-            .FirstOrDefaultAsync(e => e.FacultyName == foundEducationPlan.FacultyName);
+            .FirstOrDefaultAsync(e => e.FacultyName == model.FacultyName);
 
         if (foundStudyPlan is null)
         {
@@ -48,7 +40,6 @@ public class UniversityController : Controller
             Id = Guid.NewGuid(),
             StudyPlanId = foundStudyPlan.Id,
             Year = model.Year,
-            StudyPlan = foundStudyPlan
         };
 
         var result = await _context.AddAsync(recruitmentYear);
@@ -69,11 +60,11 @@ public class UniversityController : Controller
 
         if (foundStudyField is null)
         {
-            return BadRequest($"StudyField ${model.Name} doesn't added in database");
+            return BadRequest($"StudyField ${model.StudyProfileName} doesn't added in database");
         }
 
         var foundStudyProfile = await _context.StudyProfiles
-            .FirstOrDefaultAsync(s => s.StudyFieldName == foundStudyField.Name && s.Name == model.Name);
+            .FirstOrDefaultAsync(s => s.StudyFieldName == foundStudyField.Name && s.Name == model.StudyProfileName);
 
         if (foundStudyProfile is not null)
         {
@@ -84,7 +75,7 @@ public class UniversityController : Controller
         {
             Id = Guid.NewGuid(),
             StudyFieldName = foundStudyField.Name,
-            Name = model.Name,
+            Name = model.StudyProfileName,
             StudyField = foundStudyField
         };
 
@@ -198,18 +189,18 @@ public class UniversityController : Controller
     
     [HttpPost]
     [Route("add-department")]
-    public async Task<IActionResult> AddDepartment([FromBody] CreateFacultyRequestModel facultyModel)
+    public async Task<IActionResult> AddDepartment([FromBody] CreateDepartmentRequestModel departmentModel)
     {
         var foundFaculty = await _context.Faculties
-            .FirstOrDefaultAsync(f => f.Name == facultyModel.FacultyName);
+            .FirstOrDefaultAsync(f => f.Name == departmentModel.FacultyName);
 
         if (foundFaculty is null)
         {
-            return BadRequest($"Not found ${facultyModel.FacultyName} in database");
+            return BadRequest($"Not found ${departmentModel.FacultyName} in database");
         }
 
         var foundDepartment = await _context.Departments
-            .FirstOrDefaultAsync(d => d.FacultyName == foundFaculty.Name && d.Name == facultyModel.Name);
+            .FirstOrDefaultAsync(d => d.FacultyName == foundFaculty.Name && d.Name == departmentModel.DepartmentName);
 
         if (foundDepartment is not null)
         {
@@ -220,7 +211,7 @@ public class UniversityController : Controller
         {
             Id = Guid.NewGuid(),
             FacultyName = foundFaculty.Name,
-            Name = facultyModel.Name,
+            Name = departmentModel.DepartmentName,
             Faculty = foundFaculty
         };
 
@@ -235,7 +226,7 @@ public class UniversityController : Controller
 
     [HttpPost]
     [Route("add-group")]
-    public async Task<IActionResult> AddGroup([FromBody] CreateRecruitmentYearRequestModel recruitmentYear)
+    public async Task<IActionResult> AddGroup([FromBody] CreateGroupRequestModel recruitmentYear)
     {
         var foundRecruitmentYear = await _context.RecruitmentYears
             .FirstOrDefaultAsync(r => r.Year.Year == recruitmentYear.Year.Year);

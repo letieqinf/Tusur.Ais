@@ -17,7 +17,7 @@ public class PracticeController : Controller
     
     [HttpPost]
     [Route("add-practice-kind")]
-    public async Task<IActionResult> AddPracticeKind([FromBody] CreatePracticesRequestModel model)
+    public async Task<IActionResult> AddPracticeKind([FromBody] CreatePracticeKindRequestModel model)
     {
         var foundPracticeKind = await _context.PracticeKinds
             .FirstOrDefaultAsync(p => p.Name == model.PracticeKindName);
@@ -43,7 +43,7 @@ public class PracticeController : Controller
     
     [HttpPost]
     [Route("add-practice-type")]
-    public async Task<IActionResult> AddPracticeType([FromBody] CreatePracticesRequestModel model)
+    public async Task<IActionResult> AddPracticeType([FromBody] CreatePracticeTypeRequestModel model)
     {
         var foundPracticeKind = await _context.PracticeKinds
             .FirstOrDefaultAsync(p => p.Name == model.PracticeKindName);
@@ -83,7 +83,7 @@ public class PracticeController : Controller
     public async Task<IActionResult> AddPractice([FromBody] CreatePracticeRequestModel model)
     {
         var foundRecruitmentYear = await _context.RecruitmentYears
-            .FirstOrDefaultAsync(r => r.Year.Year == model.Year.Year);
+            .FirstOrDefaultAsync(r => r.Year.Year == model.RecruitmentYear.Year);
 
         if (foundRecruitmentYear is null)
         {
@@ -139,11 +139,11 @@ public class PracticeController : Controller
         }
         
         var foundRecruitmentYear = await _context.RecruitmentYears
-            .FirstOrDefaultAsync(r => r.Year.Year == model.Year.Year);
+            .FirstOrDefaultAsync(r => r.Year.Year == model.RecruitmentYear.Year);
         
         if (foundRecruitmentYear is null)
         {
-            return BadRequest($"RecruitmentYear ${foundRecruitmentYear} already added in database");
+            return BadRequest($"RecruitmentYear ${foundRecruitmentYear} -- ${model.RecruitmentYear} not found in database");
         }
         
         var foundPractice = await _context.Practices
@@ -173,69 +173,6 @@ public class PracticeController : Controller
         };
         
         var result = await _context.AddAsync(practicePeriod);
-        if (result.State != EntityState.Added)
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        
-        await _context.SaveChangesAsync();
-        
-        return Ok();
-    }
-    
-    [HttpPost]
-    [Route("add-practice-contract")]
-    public async Task<IActionResult> AddPracticeContract([FromBody] CreatePracticeContractRequestModel model)
-    {
-        var foundContract = await _context.Contracts
-            .FirstOrDefaultAsync(c => c.Number == model.Number);
-
-        if (foundContract is null)
-        {
-            return BadRequest($"Contract ${foundContract} not found in database");
-        }
-        
-        var foundPracticeType = await _context.PracticeTypes
-            .FirstOrDefaultAsync(p => p.Name == model.PracticeTypeName);
-
-        if (foundPracticeType is null)
-        {
-            return BadRequest($"PracticeType ${foundPracticeType?.Name} already added in database");
-        }
-        
-        var foundRecruitmentYear = await _context.RecruitmentYears
-            .FirstOrDefaultAsync(r => r.Year.Year == model.Year.Year);
-        
-        if (foundRecruitmentYear is null)
-        {
-            return BadRequest($"RecruitmentYear ${foundRecruitmentYear} already added in database");
-        }
-        
-        var foundPractice = await _context.Practices
-            .FirstOrDefaultAsync(p => p.PracticeTypeId == foundPracticeType.Id 
-                                      && p.RecruitmentYearId == foundRecruitmentYear.Id && p.Semester == model.Semester);
-
-        if (foundPractice is null)
-        {
-            return BadRequest($"Practice ${foundPractice} already added in database");
-        }
-        
-        var foundPracticeContract = await _context.PracticeContracts
-            .FirstOrDefaultAsync(p => p.PracticeId == foundPractice.Id 
-                                 && p.ContractId == foundContract.ApplicationId);
-
-        if (foundPracticeContract is null)
-        {
-            return BadRequest($"PracticeContract ${foundPracticeContract} already added in database");
-        }
-
-        var practiceContract = new PracticeContract
-        { 
-            ContractId = foundContract.ApplicationId,
-            PracticeId = foundPractice.Id,
-            Contract = foundContract,
-            Practice = foundPractice
-        };
-        
-        var result = await _context.AddAsync(practiceContract);
         if (result.State != EntityState.Added)
             return StatusCode(StatusCodes.Status500InternalServerError);
         

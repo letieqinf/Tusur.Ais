@@ -5,5 +5,5 @@ namespace Tusur.Ais.Models.Request;
 public class CreateStudyProfileRequestModel
 {
     [Required] public string StudyFieldName { get; set; }
-    [Required] public string Name { get; set; }
+    [Required] public string StudyProfileName { get; set; }
 }

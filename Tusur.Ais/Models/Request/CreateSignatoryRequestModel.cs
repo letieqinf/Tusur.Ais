@@ -12,3 +12,10 @@ public class CreateSignatoryRequestModel
     [Required] public DateTime DateStart { get; set; }
     [Required] public int Number { get; set; }
 }
+
+public class CreateProxyRequestModel
+{
+    [Required, Key] public Guid SignatoryId { get; set; }
+    [Required] public DateTime DateStart { get; set; }
+    [Required] public int Number { get; set; }
+}
