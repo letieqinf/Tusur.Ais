@@ -187,6 +187,57 @@ namespace Tusur.Ais.Controllers
 
             return Ok(output);
         }
+        
+        [HttpPost]
+        [Route("approve-contract")]
+        public async Task<IActionResult> ApproveContract([FromBody] ApproveContractRequestModel model)
+        {
+            var foundApplication = await _context.StudentApplications
+                .FirstOrDefaultAsync(t => t.ApplicationId == model.ApplicationId);
+
+            if (foundApplication is null)
+            {
+                return BadRequest($"Application ${foundApplication} not found in database");
+            }
+
+            var application = foundApplication.Application;
+
+            if (application.Status is ApplicationStatuses.Sent) 
+            {
+                application.Status = ApplicationStatuses.ApprovedByTeacher;
+            }
+
+            if (application.Contract?.Company is { Status: CompanyConfirmationStatuses.InProcess }) 
+            {
+                application.Contract.Company.Status = CompanyConfirmationStatuses.Confirmed;
+            }
+        
+            _context.Update(application); 
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+        
+        [HttpPost]
+        [Route("sending-for-revision")]
+        public async Task<IActionResult> SendingForRevision([FromBody] ApproveContractRequestModel model)
+        {
+            var foundApplication = await _context.StudentApplications
+                .FirstOrDefaultAsync(t => t.ApplicationId == model.ApplicationId);
+
+            if (foundApplication is null)
+            {
+                return BadRequest($"Application ${foundApplication} not found in database");
+            }
+
+            var application = foundApplication.Application;
+            application.Status = ApplicationStatuses.Editing;
+        
+            _context.Update(application); 
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
 
         [Authorize(Roles = UserRoles.Student)]
         [HttpPost]

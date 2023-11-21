@@ -5,5 +5,5 @@ namespace Tusur.Ais.Models.Request;
 
 public class ApproveContractRequestModel
 {
-    [Required, Key] public Guid StudentId { get; set; }
+    [Required, Key] public Guid ApplicationId { get; set; }
 }
