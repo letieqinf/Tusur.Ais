@@ -40,114 +40,9 @@ namespace Tusur.Ais.Controllers
             if (user is null)
                 return StatusCode(StatusCodes.Status500InternalServerError);
 
-            var contracts = new List<GetContractsResponseModel>();
+            var contracts = await user.GetContractsAsync(_userManager, _context);
 
-            if (await _userManager.IsInRoleAsync(user, UserRoles.Student))
-                contracts = await GetStudentContracts(user, contracts);
-            
-            var contractApplications = new List<Contract>();
-
-            if (await _userManager.IsInRoleAsync(user, UserRoles.Teacher))
-            {
-                var applications = _context.Applications
-                    .Where(a => a.Status == ApplicationStatuses.Sent)
-                    .Select(a => a.Id);
-                
-                foreach (var application in applications)
-                {
-                    //return Ok(application);
-                    var contract = await _context.Contracts.FirstOrDefaultAsync(c => c.ApplicationId == application);
-                    if (contract != null)
-                    {
-                        contractApplications.Add(contract);
-
-                        // if (contract!.TeacherId != user.Id)
-                        //     contractApplications.Add(contract);
-                    }
-                }
-                
-                return Ok(contractApplications);
-            }
-
-
-            if (contractApplications is null)
-                return StatusCode(StatusCodes.Status500InternalServerError);
-
-            return Ok(contractApplications);
-        }
-
-        private async Task<List<GetContractsResponseModel>> GetStudentContracts(User user, List<GetContractsResponseModel> contracts)
-        {
-            var group = await _context.GetStudentGroupAsync(user);
-            var year = await _context.GetStudentRecruitmentYearAsync(user);
-            var studyProfile = await _context.GetStudentStudyProfileAsync(user);
-            var studyForm = await _context.GetStudentStudyFormAsync(user);
-
-            var applications = _context.StudentApplications
-                .Where(sa => sa.StudentId == user.Id)
-                .Select(sa => sa.ApplicationId);
-
-            foreach (var application in applications)
-            {
-                var app = await _context.Applications.FindAsync(application);
-                var contract = await _context.Contracts.FirstOrDefaultAsync(c => c.ApplicationId == application);
-                var teacher = await _context.Users.FirstOrDefaultAsync(t => t.Id == contract!.TeacherId);
-                var signatory = await _context.Signatories.FirstOrDefaultAsync(s => s.Id == contract!.SignatoryId);
-                var company = await _context.Companies.FirstOrDefaultAsync(c => c.Id == contract!.CompanyId);
-                var contactFace = await _context.ContactFaces.FirstOrDefaultAsync(c => c.Id == contract!.ContactFaceId);
-
-                contracts.Add(new GetContractsResponseModel
-                {
-                    ContractId = contract!.ApplicationId,
-                    Number = contract!.Number,
-                    Date = contract!.Date,
-                    StudentDescription = new GetContractsResponseModel.Student
-                    {
-                        Name = user.Name!,
-                        LastName = user.LastName!,
-                        Patronymic = user.Patronymic,
-                        Group = group.Name,
-                        StudyField = studyProfile.StudyFieldName,
-                        StudyProfile = studyProfile.Name,
-                        StudyForm = studyForm,
-                        RecruitmentYear = year.Year
-                    },
-                    TeacherDescription = new GetContractsResponseModel.Teacher
-                    {
-                        Name = teacher!.Name!,
-                        LastName = teacher!.LastName!,
-                        Patronymic = teacher!.Patronymic
-                    },
-                    SignatoryDescription = new GetContractsResponseModel.Signatory
-                    {
-                        Name = signatory!.Name,
-                        LastName = signatory.LastName,
-                        Patronymic = signatory.Patronymic,
-                        JobTitle = signatory.JobTitle!
-                    },
-                    CompanyDescription = new GetContractsResponseModel.Company
-                    {
-                        Inn = company!.Inn,
-                        Name = company!.Name,
-                        ShortName = company!.ShortName,
-                        Address = company!.Address,
-                        DirectorName = company!.DirectorName,
-                        DirectorLastName = company!.DirectorLastName,
-                        DirectorPatronymic = company!.DirectorPatronymic,
-                        Status = company!.Status
-                    },
-                    ContactFaceDescription = new GetContractsResponseModel.ContactFace
-                    {
-                        Name = contactFace!.Name,
-                        LastName = contactFace!.LastName,
-                        Patronymic = contactFace.Patronymic,
-                        JobTitle = contactFace.JobTitle
-                    },
-                    ApplicationStatus = app!.Status
-                });
-            }
-
-            return contracts;
+            return Ok(contracts);
         }
 
         [Authorize(Roles = UserRoles.Student)]
@@ -196,7 +91,8 @@ namespace Tusur.Ais.Controllers
 
             return Ok(output);
         }
-        
+
+        [Authorize(Roles = UserRoles.Teacher)]
         [HttpPost]
         [Route("approve-contract")]
         public async Task<IActionResult> ApproveContract([FromBody] ApproveContractRequestModel model)
@@ -226,7 +122,8 @@ namespace Tusur.Ais.Controllers
 
             return Ok();
         }
-        
+
+        [Authorize(Roles = UserRoles.Teacher)]
         [HttpPost]
         [Route("sending-for-revision")]
         public async Task<IActionResult> SendingForRevision([FromBody] ApproveContractRequestModel model)
@@ -246,7 +143,7 @@ namespace Tusur.Ais.Controllers
             return Ok();
         }
 
-        //[Authorize(Roles = UserRoles.Admin)]
+        [Authorize(Roles = UserRoles.Student)]
         [HttpPost]
         [Route("contracts/create-contract")]
         public async Task<IActionResult> CreateContract([FromBody] CreateContractRequestModel model)
