@@ -23,7 +23,7 @@ namespace Tusur.Ais.Services
             var admin = new User
             {
                 UserName = "admin",
-                Email = "admin@temp.com"
+                    Email = "admin@temp.com"
             };
 
             var user = await _userManager.FindByEmailAsync(admin.Email);

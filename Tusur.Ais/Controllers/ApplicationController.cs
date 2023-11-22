@@ -44,27 +44,36 @@ namespace Tusur.Ais.Controllers
 
             if (await _userManager.IsInRoleAsync(user, UserRoles.Student))
                 contracts = await GetStudentContracts(user, contracts);
+            
+            var contractApplications = new List<Contract>();
 
             if (await _userManager.IsInRoleAsync(user, UserRoles.Teacher))
             {
                 var applications = _context.Applications
                     .Where(a => a.Status == ApplicationStatuses.Sent)
                     .Select(a => a.Id);
-
-                var contractApplications = new List<Contract>();
-
+                
                 foreach (var application in applications)
                 {
+                    //return Ok(application);
                     var contract = await _context.Contracts.FirstOrDefaultAsync(c => c.ApplicationId == application);
-                    if (contract!.TeacherId == user.Id)
-                        contractApplications.Add(contract!);
+                    if (contract != null)
+                    {
+                        contractApplications.Add(contract);
+
+                        // if (contract!.TeacherId != user.Id)
+                        //     contractApplications.Add(contract);
+                    }
                 }
+                
+                return Ok(contractApplications);
             }
 
-            if (contracts is null)
+
+            if (contractApplications is null)
                 return StatusCode(StatusCodes.Status500InternalServerError);
 
-            return Ok(contracts);
+            return Ok(contractApplications);
         }
 
         private async Task<List<GetContractsResponseModel>> GetStudentContracts(User user, List<GetContractsResponseModel> contracts)
@@ -187,8 +196,57 @@ namespace Tusur.Ais.Controllers
 
             return Ok(output);
         }
+        
+        [HttpPost]
+        [Route("approve-contract")]
+        public async Task<IActionResult> ApproveContract([FromBody] ApproveContractRequestModel model)
+        {
+            var foundApplication = await _context.Applications
+                .FirstOrDefaultAsync(t => t.Id == model.ApplicationId);
 
-        [Authorize(Roles = UserRoles.Student)]
+            if (foundApplication is null)
+            {
+                return BadRequest($"Application ${foundApplication} not found in database");
+            }
+            
+            if (foundApplication.Status is ApplicationStatuses.Sent) 
+            {
+                foundApplication.Status = ApplicationStatuses.ApprovedByTeacher;
+            }
+
+            //return Ok("good");
+            
+            if (foundApplication.Contract?.Company is { Status: CompanyConfirmationStatuses.InProcess }) 
+            {
+                foundApplication.Contract.Company.Status = CompanyConfirmationStatuses.Confirmed;
+            }
+        
+            _context.Update(foundApplication); 
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+        
+        [HttpPost]
+        [Route("sending-for-revision")]
+        public async Task<IActionResult> SendingForRevision([FromBody] ApproveContractRequestModel model)
+        {
+            var foundApplication = await _context.Applications
+                .FirstOrDefaultAsync(t => t.Id == model.ApplicationId);
+
+            if (foundApplication is null)
+            {
+                return BadRequest($"Application ${foundApplication} not found in database");
+            }
+
+            foundApplication.Status = ApplicationStatuses.Editing;
+            _context.Update(foundApplication); 
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        //[Authorize(Roles = UserRoles.Admin)]
         [HttpPost]
         [Route("contracts/create-contract")]
         public async Task<IActionResult> CreateContract([FromBody] CreateContractRequestModel model)
@@ -228,6 +286,7 @@ namespace Tusur.Ais.Controllers
             var contactFace = new ContactFace
             {
                 Id = Guid.NewGuid(),
+                CompanyId = company.Id,
                 Name = model.ContactFaceName,
                 LastName = model.ContactFaceLastName,
                 Patronymic = model.ContactFacePatronymic,
