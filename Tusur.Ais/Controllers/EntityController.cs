@@ -67,19 +67,19 @@ public class EntityController : Controller
     [Route("add-secretary")]
     public async Task<IActionResult> AddSecretary([FromBody] CreateSecretaryRequestModel model)
     {
-        var foundSecretary = await _context.Secretaries
-            .FirstOrDefaultAsync(s => s.Id == model.SecretaryId);
+        var foundUser = await _context.Secretaries
+            .FirstOrDefaultAsync(s => s.UserId == model.UserId);
         
-        if (foundSecretary is not null)
+        if (foundUser is not null)
         {
-            return BadRequest($"Secretary ${foundSecretary} already added in database");
+            return BadRequest($"Secretary ${foundUser} already added in database");
         }
 
         var secretary = new Secretary
         { 
             Id = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
-            //User = foundSecretary.User
+            UserId = model.UserId,
+            User = foundUser.User
         };
     
         var result = await _context.AddAsync(secretary);
@@ -95,21 +95,21 @@ public class EntityController : Controller
     [Route("add-education-department")]
     public async Task<IActionResult> AddEducationDepartment([FromBody] CreateEducationDepartmentRequestModel model)
     {
-        var foundEducationDepartment = await _context.EducationDepartments
-            .FirstOrDefaultAsync(s => s.Id == model.EducationDepartmentId);
+        var foundUser = await _context.EducationDepartments
+            .FirstOrDefaultAsync(s => s.UserId == model.UserId);
         
-        if (foundEducationDepartment is not null)
+        if (foundUser is not null)
         {
-            return BadRequest($"EducationDepartment ${foundEducationDepartment} already added in database");
+            return BadRequest($"EducationDepartment ${foundUser} already added in database");
         }
 
-        if (foundEducationDepartment != null)
+        if (foundUser != null)
         {
             var educationDepartment = new EducationDepartment
             { 
                 Id = Guid.NewGuid(),
-                UserId = foundEducationDepartment.UserId,
-                User = foundEducationDepartment.User
+                UserId = foundUser.UserId,
+                User = foundUser.User
             };
         
             var result = await _context.AddAsync(educationDepartment);

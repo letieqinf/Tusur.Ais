@@ -4,5 +4,5 @@ namespace Tusur.Ais.Models.Request;
 
 public class CreateSecretaryRequestModel
 {
-    [Required, Key] public Guid SecretaryId { get; set; } 
+    [Required, Key] public Guid UserId { get; set; } 
 }

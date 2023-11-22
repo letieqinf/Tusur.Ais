@@ -4,5 +4,5 @@ namespace Tusur.Ais.Models.Request;
 
 public class CreateEducationDepartmentRequestModel
 {
-    [Required, Key] public Guid EducationDepartmentId { get; set; } 
+    [Required, Key] public Guid UserId { get; set; } 
 }
