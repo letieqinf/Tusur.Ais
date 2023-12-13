@@ -92,35 +92,116 @@ namespace Tusur.Ais.Controllers
             return Ok(output);
         }
 
-        [Authorize(Roles = UserRoles.Teacher)]
+        [Authorize(Roles = $"{UserRoles.Teacher}, {UserRoles.EducationDepartment}, {UserRoles.Secretary}")]
         [HttpPost]
         [Route("approve-contract")]
         public async Task<IActionResult> ApproveContract([FromBody] ApproveContractRequestModel model)
         {
-            var foundApplication = await _context.Applications
+            var jwtTokenClaims = Request.GetJwtTokenClaims();
+            var roles = jwtTokenClaims.GetRolesFromClaims();
+
+            if (roles.Contains(UserRoles.Teacher))
+            {
+                var foundApplication = await _context.Applications
                 .FirstOrDefaultAsync(t => t.Id == model.ApplicationId);
 
-            if (foundApplication is null)
-            {
-                return BadRequest($"Application ${foundApplication} not found in database");
+                if (foundApplication is null)
+                {
+                    return BadRequest($"Application ${foundApplication} not found in database");
+                }
+
+                if (foundApplication.Status is ApplicationStatuses.Sent)
+                {
+                    foundApplication.Status = ApplicationStatuses.ApprovedByTeacher;
+                }
+
+                if (foundApplication.Contract?.Company is { Status: CompanyConfirmationStatuses.InProcess })
+                {
+                    foundApplication.Contract.Company.Status = CompanyConfirmationStatuses.Confirmed;
+                }
+
+                _context.Update(foundApplication);
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
-            
-            if (foundApplication.Status is ApplicationStatuses.Sent) 
+            else if (roles.Contains(UserRoles.EducationDepartment))
             {
-                foundApplication.Status = ApplicationStatuses.ApprovedByTeacher;
+                try
+                {
+                    // Поиск документа в базе данных по его идентификатору
+                    var application = await _context.Applications.FirstOrDefaultAsync(a => a.Id == model.ApplicationId);
+
+                    // Проверка, найден ли документ
+                    if (application == null)
+                    {
+                        return NotFound("Документ не найден");
+                    }
+
+                    // Проверка статуса документа перед утверждением, если не отправлен на согласование - ошибка
+                    if (application.Status != ApplicationStatuses.Sent)
+                    {
+                        return BadRequest("Нельзя утвердить документ в текущем статусе");
+                    }
+
+                    // Добавление номера и даты договора к документу
+                    application.Contract.Number = model.ContractNumber;
+                    application.Contract.Date = model.ContractDate;
+                    // Изменение статуса документа на подтвержденный уч. управлением
+                    application.Status = ApplicationStatuses.ApprovedByEducationDepartment;
+
+                    // Сохранение изменений в базе данных
+                    await _context.SaveChangesAsync();
+
+                    return Ok($"Документ успешно утвержден. Индивидуальный номер договора: {model.ContractNumber}");
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                }
+            }
+            else if (roles.Contains(UserRoles.Secretary))
+            {
+                try
+                {
+                    // Взял id дока из модели, налачал искать документ в бд по его идентификатору
+                    var application = await _context.Applications.FirstOrDefaultAsync(a => a.Id == model.ApplicationId);
+
+                    // Проверка, найден ли документ
+                    if (application == null)
+                    {
+                        return NotFound("Документ не найден");
+                    }
+
+                    // Проверка статуса документа перед утверждением, если согласован руководителем учебного управления
+                    if (application.Status == ApplicationStatuses.ApprovedByEducationDepartment)
+                    {
+                        // Изменение статуса документа на принятый секретарем
+                        application.Status = ApplicationStatuses.AcceptedBySecretary;
+                    }
+                    // Если он уже был принят секретарем
+                    else if (application.Status == ApplicationStatuses.AcceptedBySecretary)
+                    {
+                        // Изменение статуса документа на отправлен в центр карьеры
+                        application.Status = ApplicationStatuses.SentToCareerCenter;
+                    }
+                    else
+                    {
+                        return BadRequest("Нельзя утвердить документ в текущем статусе");
+                    }
+
+                    // Сохранение изменений в бд
+                    await _context.SaveChangesAsync();
+
+                    return Ok($"Документ успешно утвержден.");
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+                }
             }
 
-            //return Ok("good");
-            
-            if (foundApplication.Contract?.Company is { Status: CompanyConfirmationStatuses.InProcess }) 
-            {
-                foundApplication.Contract.Company.Status = CompanyConfirmationStatuses.Confirmed;
-            }
-        
-            _context.Update(foundApplication); 
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            return Forbid();
         }
 
         [Authorize(Roles = UserRoles.Teacher)]
